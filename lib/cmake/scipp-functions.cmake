@@ -28,6 +28,10 @@ scipp_unary(math inv SKIP_VARIABLE)
 scipp_binary(math pow SKIP_VARIABLE OUT)
 setup_scipp_category(math)
 
+scipp_binary(special_functions spherical_jn)
+scipp_binary(special_functions spherical_yn)
+setup_scipp_category(special_functions)
+
 scipp_binary(vector angle_between)
 scipp_binary(vector cross)
 scipp_binary(vector dot)
