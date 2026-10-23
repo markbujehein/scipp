@@ -23,6 +23,7 @@ add_executable(
   element_logical_test.cpp
   element_map_to_bins_test.cpp
   element_math_test.cpp
+  element_special_functions_test.cpp
   element_special_values_test.cpp
   element_to_unit_test.cpp
   element_trigonometry_test.cpp

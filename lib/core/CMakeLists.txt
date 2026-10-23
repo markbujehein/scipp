@@ -35,6 +35,7 @@ set(INC_FILES
     include/scipp/core/element/rebin.h
     include/scipp/core/element/reduction.h
     include/scipp/core/element/sort.h
+    include/scipp/core/element/special_functions.h
     include/scipp/core/element/special_values.h
     include/scipp/core/element/trigonometry.h
     include/scipp/core/element/util.h
@@ -67,7 +68,7 @@ generate_export_header(${TARGET_NAME})
 # Boost linking: SKBUILD uses CPM-fetched component targets, conda uses system
 # Boost::headers
 if(SKBUILD AND NOT SKIP_REMOTE_SOURCES)
-  set(BOOST_TARGETS Boost::container Boost::iterator)
+  set(BOOST_TARGETS Boost::container Boost::iterator Boost::math)
 else()
   set(BOOST_TARGETS Boost::headers)
 endif()

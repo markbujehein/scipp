@@ -92,8 +92,8 @@ if(SKBUILD)
     "BENCHMARK_ENABLE_TESTING Off"
   )
 
-  # Boost headers (only container and iterator are used)
-  set(BOOST_INCLUDE_LIBRARIES container iterator)
+  # Boost headers (only container, iterator and math are used)
+  set(BOOST_INCLUDE_LIBRARIES container iterator math)
   cpmaddpackage(
     NAME
     Boost
