@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from typing import TypeVar, overload
 
+import numpy as np
+
 from .._scipp import core as _cpp
 from ..typing import VariableLike, VariableLikeType
 from ._cpp_wrapper_util import call_func as _call_cpp_func
@@ -647,6 +649,102 @@ def erfc(x: VariableLikeType) -> VariableLikeType:
     The complementary error function is defined as erfc(x) = 1 - erf(x).
     """  # noqa: E501
     return _call_cpp_func(_cpp.erfc, x)  # type: ignore[return-value]
+
+
+def spherical_jn(
+    n: int | np.integer | Variable, x: VariableLikeType
+) -> VariableLikeType:
+    r"""
+    Computes the spherical Bessel function of the first kind, :math:`j_n(x)`.
+
+    The implementation uses Boost.Math.
+    Like :func:`scipy.special.spherical_jn`, negative ``x`` is handled using
+    :math:`j_n(-x) = (-1)^n j_n(x)`, and negative orders give NaN.
+
+    Parameters
+    ----------
+    n:
+        Order of the function, an integer or a dimensionless integer variable.
+        A variable with other dims than ``x`` broadcasts against it.
+    x:
+        Dimensionless argument, for example :math:`Qr`.
+        Variances are not supported.
+
+    Returns
+    -------
+    :
+        Dimensionless values of :math:`j_n(x)`.
+
+    See Also
+    --------
+    scipp.spherical_yn
+
+    Examples
+    --------
+    Compute :math:`j_0(x) = \sin(x) / x`:
+
+      >>> import scipp as sc
+      >>> x = sc.array(dims=['x'], values=[0.0, 1.0, 2.5, 10.0])
+      >>> sc.spherical_jn(0, x)
+      <scipp.Variable> (x: 4)    float64  [dimensionless]  [1, 0.841471, 0.239389, -0.0544021]
+
+    An order variable with its own dimension gives a table of orders and arguments:
+
+      >>> n = sc.array(dims=['n'], values=[0, 1, 2])
+      >>> sc.spherical_jn(n, sc.array(dims=['x'], values=[0.5, 1.0]))
+      <scipp.Variable> (n: 3, x: 2)    float64  [dimensionless]  [0.958851, 0.841471, ..., 0.0163711, 0.0620351]
+    """  # noqa: E501
+    if isinstance(n, int | np.integer):
+        n = scalar(n)
+    return _call_cpp_func(_cpp.spherical_jn, n, x)  # type: ignore[return-value]
+
+
+def spherical_yn(
+    n: int | np.integer | Variable, x: VariableLikeType
+) -> VariableLikeType:
+    r"""
+    Computes the spherical Bessel function of the second kind, :math:`y_n(x)`.
+
+    The implementation uses Boost.Math.
+    Like :func:`scipy.special.spherical_yn`, negative ``x`` is handled using
+    :math:`y_n(-x) = (-1)^{n+1} y_n(x)`, negative orders give NaN,
+    and :math:`y_n(0)` is :math:`-\infty`.
+
+    Parameters
+    ----------
+    n:
+        Order of the function, an integer or a dimensionless integer variable.
+        A variable with other dims than ``x`` broadcasts against it.
+    x:
+        Dimensionless argument, for example :math:`Qr`.
+        Variances are not supported.
+
+    Returns
+    -------
+    :
+        Dimensionless values of :math:`y_n(x)`.
+
+    See Also
+    --------
+    scipp.spherical_jn
+
+    Examples
+    --------
+    Compute :math:`y_0(x) = -\cos(x) / x`:
+
+      >>> import scipp as sc
+      >>> x = sc.array(dims=['x'], values=[0.0, 1.0, 2.5, 10.0])
+      >>> sc.spherical_yn(0, x)
+      <scipp.Variable> (x: 4)    float64  [dimensionless]  [-inf, -0.540302, 0.320457, 0.0839072]
+
+    :math:`y_1` is even, :math:`y_1(-x) = y_1(x)`:
+
+      >>> sc.spherical_yn(1, sc.array(dims=['x'], values=[-1.0, 1.0]))
+      <scipp.Variable> (x: 2)    float64  [dimensionless]  [-1.38177, -1.38177]
+    """  # noqa: E501
+    if isinstance(n, int | np.integer):
+        n = scalar(n)
+    return _call_cpp_func(_cpp.spherical_yn, n, x)  # type: ignore[return-value]
 
 
 def midpoints(x: Variable, dim: str | None = None) -> Variable:

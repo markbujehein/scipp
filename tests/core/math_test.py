@@ -221,3 +221,144 @@ def test_floor() -> None:
     x_out = sc.zeros_like(expected)
     sc.floor(x, out=x_out)
     assert sc.identical(x_out, expected)
+
+
+spherical_bessel_funcs = pytest.mark.parametrize(
+    ('sc_f', 'ref'),
+    [
+        (sc.spherical_jn, scipy.special.spherical_jn),
+        (sc.spherical_yn, scipy.special.spherical_yn),
+    ],
+)
+
+
+@spherical_bessel_funcs
+@pytest.mark.parametrize('n', [0, 1, 2, 5, 20])
+def test_spherical_bessel_compare_to_scipy(
+    sc_f: Callable[..., sc.Variable], ref: Callable[..., np.ndarray], n: int
+) -> None:
+    x = np.array([-12.5, -1.7, -0.3, 0.1, 0.5, 1.0, 2.5, 10.0, 100.0])
+    result = sc_f(n, sc.array(dims=['x'], values=x))
+    expected = sc.array(dims=['x'], values=ref(n, x))
+    assert sc.allclose(result, expected, rtol=sc.scalar(1e-12), atol=sc.scalar(0.0))
+
+
+@spherical_bessel_funcs
+def test_spherical_bessel_output_is_dimensionless_float64(
+    sc_f: Callable[..., sc.Variable], ref: Callable[..., np.ndarray]
+) -> None:
+    result = sc_f(1, sc.scalar(0.5))
+    assert result.unit == sc.units.one
+    assert result.dtype == sc.DType.float64
+
+
+@spherical_bessel_funcs
+def test_spherical_bessel_float32_input_gives_float32(
+    sc_f: Callable[..., sc.Variable], ref: Callable[..., np.ndarray]
+) -> None:
+    result = sc_f(2, sc.scalar(0.5, dtype='float32'))
+    assert result.dtype == sc.DType.float32
+    assert sc.allclose(result, sc.scalar(ref(2, 0.5), dtype='float32'))
+
+
+@spherical_bessel_funcs
+def test_spherical_bessel_accepts_int32_order(
+    sc_f: Callable[..., sc.Variable], ref: Callable[..., np.ndarray]
+) -> None:
+    result = sc_f(sc.scalar(2, dtype='int32'), sc.scalar(0.5))
+    assert sc.allclose(result, sc.scalar(ref(2, 0.5)))
+
+
+@spherical_bessel_funcs
+def test_spherical_bessel_negative_order_gives_nan(
+    sc_f: Callable[..., sc.Variable], ref: Callable[..., np.ndarray]
+) -> None:
+    assert np.isnan(sc_f(-1, sc.scalar(1.0)).value)
+
+
+@spherical_bessel_funcs
+def test_spherical_bessel_x_with_unit_raises(
+    sc_f: Callable[..., sc.Variable], ref: Callable[..., np.ndarray]
+) -> None:
+    with pytest.raises(sc.UnitError):
+        sc_f(1, sc.scalar(0.5, unit='m'))
+
+
+@spherical_bessel_funcs
+def test_spherical_bessel_order_with_unit_raises(
+    sc_f: Callable[..., sc.Variable], ref: Callable[..., np.ndarray]
+) -> None:
+    with pytest.raises(sc.UnitError):
+        sc_f(sc.scalar(1, unit='m'), sc.scalar(0.5))
+
+
+@spherical_bessel_funcs
+def test_spherical_bessel_float_order_raises(
+    sc_f: Callable[..., sc.Variable], ref: Callable[..., np.ndarray]
+) -> None:
+    with pytest.raises(sc.DTypeError):
+        sc_f(sc.scalar(1.0), sc.scalar(0.5))
+
+
+@spherical_bessel_funcs
+def test_spherical_bessel_variances_raise(
+    sc_f: Callable[..., sc.Variable], ref: Callable[..., np.ndarray]
+) -> None:
+    with pytest.raises(sc.VariancesError):
+        sc_f(1, sc.scalar(0.5, variance=0.01))
+
+
+@spherical_bessel_funcs
+def test_spherical_bessel_order_variable_broadcasts_against_x(
+    sc_f: Callable[..., sc.Variable], ref: Callable[..., np.ndarray]
+) -> None:
+    n = sc.array(dims=['n'], values=[0, 1, 2])
+    x = sc.array(dims=['x'], values=[0.5, 1.0, 2.5, 10.0])
+    result = sc_f(n, x)
+    assert result.dims == ('n', 'x')
+    expected = ref(n.values[:, np.newaxis], x.values[np.newaxis, :])
+    assert sc.allclose(result, sc.array(dims=['n', 'x'], values=expected))
+
+
+@spherical_bessel_funcs
+def test_spherical_bessel_data_array_keeps_coords_and_masks(
+    sc_f: Callable[..., sc.Variable], ref: Callable[..., np.ndarray]
+) -> None:
+    da = sc.DataArray(
+        sc.array(dims=['q'], values=[0.5, 1.0, 2.5]),
+        coords={'q': sc.array(dims=['q'], values=[1.0, 2.0, 3.0], unit='1/angstrom')},
+        masks={'bad': sc.array(dims=['q'], values=[False, True, False])},
+    )
+    result = sc_f(1, da)
+    assert sc.identical(result.coords['q'], da.coords['q'])
+    assert sc.identical(result.masks['bad'], da.masks['bad'])
+    assert sc.allclose(result.data, sc.array(dims=['q'], values=ref(1, da.values)))
+
+
+@spherical_bessel_funcs
+def test_spherical_bessel_integer_x_gives_float64(
+    sc_f: Callable[..., sc.Variable], ref: Callable[..., np.ndarray]
+) -> None:
+    # x=0 is left out because y_n(0) = -inf and allclose rejects inf == inf.
+    x = sc.array(dims=['x'], values=[-3, -2, -1, 1, 2, 3])
+    result = sc_f(1, x)
+    assert result.dtype == sc.DType.float64
+    assert sc.allclose(result, sc.array(dims=['x'], values=ref(1, x.values)))
+
+
+@spherical_bessel_funcs
+def test_spherical_bessel_accepts_numpy_integer_order(
+    sc_f: Callable[..., sc.Variable], ref: Callable[..., np.ndarray]
+) -> None:
+    result = sc_f(np.int64(2), sc.scalar(0.5))
+    assert sc.allclose(result, sc.scalar(ref(2, 0.5)))
+
+
+@spherical_bessel_funcs
+@pytest.mark.parametrize('n', [0, 1, 2])
+def test_spherical_bessel_infinite_x_matches_scipy(
+    sc_f: Callable[..., sc.Variable], ref: Callable[..., np.ndarray], n: int
+) -> None:
+    x = np.array([-np.inf, np.inf])
+    result = sc_f(n, sc.array(dims=['x'], values=x))
+    assert sc.identical(result, sc.array(dims=['x'], values=ref(n, x)))

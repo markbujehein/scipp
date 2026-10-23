@@ -62,6 +62,8 @@ Math
    pow
    reciprocal
    round
+   spherical_jn
+   spherical_yn
    sqrt
    subtract
 

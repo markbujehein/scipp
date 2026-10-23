@@ -133,6 +133,8 @@ from .math import (
     ceil,
     erf,
     erfc,
+    spherical_jn,
+    spherical_yn,
     midpoints,
 )
 from .operations import (
@@ -351,6 +353,8 @@ __all__ = [
     'sinc',
     'sinh',
     'sort',
+    'spherical_jn',
+    'spherical_yn',
     'sqrt',
     'squeeze',
     'std',

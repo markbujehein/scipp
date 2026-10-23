@@ -109,6 +109,8 @@ from .core import (
     ceil,
     erf,
     erfc,
+    spherical_jn,
+    spherical_yn,
     midpoints,
 )
 from .core import (
@@ -411,6 +413,8 @@ __all__ = [
     'slices',
     'sort',
     'spatial',
+    'spherical_jn',
+    'spherical_yn',
     'sqrt',
     'squeeze',
     'std',
